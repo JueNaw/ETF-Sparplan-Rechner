@@ -3,3 +3,4 @@ pandas
 pandas-datareader
 beautifulsoup4
 altair
+numpy

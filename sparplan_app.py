@@ -1,5 +1,6 @@
 import pandas as pd
 import pandas_datareader.data as web
+import numpy as np
 
 import datetime as dt
 
@@ -95,33 +96,75 @@ def main():
 
 ###Grafik
     with col2_1:
+        option = st.selectbox('Wertentwicklung zukünftig oder historisch?', ('Zukünftig', 'Historisch'))
         breit = 500
         hoch = 450
 
-        chart_plan = alt.Chart(df_out).mark_trail(point=True, clip=True, opacity=0.8).encode(
-            alt.X('Datum',
-                #scale=alt.Scale(domain=(df_hist['Datum'].astype(int).min() -1, df_hist['Datum'].astype(int).max() + 1)),
-                title='Datum'),
-            alt.Y('Wertentwicklung Sparplan in EUR',
-                scale=alt.Scale(domain=(df_out['Wertentwicklung Sparplan in EUR'].min() -1, df_out['Wertentwicklung Sparplan in EUR'].max() + 1)),
-                title='Wertentwicklung Sparplan in EUR'),
-            tooltip=['Datum', 'Wertentwicklung Sparplan in EUR', 'Performance in %', 'Investiert in EUR'],
-            size=alt.Size('Wertentwicklung Sparplan in EUR', scale=alt.Scale(range=[1, 4, 10]), legend=None),
-        ).interactive().properties(
-            width=breit,
-            height=hoch
-        )
+        if option == 'Historisch':
+            chart_plan = alt.Chart(df_out).mark_trail(point=True, clip=True, opacity=0.8).encode(
+                alt.X('Datum',
+                    #scale=alt.Scale(domain=(df_hist['Datum'].astype(int).min() -1, df_hist['Datum'].astype(int).max() + 1)),
+                    title='Datum'),
+                alt.Y('Wertentwicklung Sparplan in EUR',
+                    scale=alt.Scale(domain=(df_out['Wertentwicklung Sparplan in EUR'].min() -1, df_out['Wertentwicklung Sparplan in EUR'].max() + 1)),
+                    title='Wertentwicklung Sparplan in EUR'),
+                tooltip=['Datum', 'Wertentwicklung Sparplan in EUR', 'Performance in %', 'Investiert in EUR'],
+                size=alt.Size('Wertentwicklung Sparplan in EUR', scale=alt.Scale(range=[1, 4, 10]), legend=None),
+            ).interactive().properties(
+                width=breit,
+                height=hoch
+            )
 
-        chart_invest = alt.Chart(df_out).mark_trail(point=True, clip=True, color='yellow', opacity=0.8).encode(
-            alt.X('Datum',
-                title='Datum'),
-            alt.Y('Investiert in EUR',
-                title='Investiert in EUR'),
-            size=alt.Size('Investiert in EUR', scale=alt.Scale(range=[1, 4, 10]), legend=None),
-        ).interactive()
+            chart_invest = alt.Chart(df_out).mark_trail(point=True, clip=True, color='yellow', opacity=0.8).encode(
+                alt.X('Datum',
+                    title='Datum'),
+                alt.Y('Investiert in EUR',
+                    title='Investiert in EUR'),
+                size=alt.Size('Investiert in EUR', scale=alt.Scale(range=[1, 4, 10]), legend=None),
+            ).interactive()
 
-        chart = chart_plan + chart_invest
-        st.altair_chart(chart)
+            chart = chart_plan + chart_invest
+            st.altair_chart(chart)
+        else:
+            Laufzeit = 20
+
+            df_fut = pd.DataFrame([], columns=['Sparbetrag', 'Wertentwicklung', 'Zinsertrag (brutto)'], index=range(Laufzeit*12)).reset_index().rename(columns={'index': 'Monat'})
+            df_fut['Monat'] = df_fut.index + 1 
+            df_fut['Sparbetrag'] = (entry_money * df_fut['Monat'])
+            perf_year = round(df_out['Performance in %'][count] / df_out['index'].max() * 12, 2)
+            df_fut['Wertentwicklung'] = -1 * np.fv(perf_year/100/12, df_fut['Monat'], entry_money, 0, when=1)
+            df_fut['Zinsertrag (brutto)'] = df_fut['Wertentwicklung'] - df_fut['Sparbetrag']
+            df_fut['Wertentwicklung'] = round(df_fut['Wertentwicklung'] *1, 2)
+            df_fut['Zinsertrag (brutto)'] = round(df_fut['Zinsertrag (brutto)'] *1, 2)
+
+###Grafik Zukunft
+            chart_fut = alt.Chart(df_fut).mark_trail(point=True, clip=True, opacity=0.8).encode(
+                alt.X('Monat',
+                    #scale=alt.Scale(domain=(df_hist['Datum'].astype(int).min() -1, df_hist['Datum'].astype(int).max() + 1)),
+                    title='Monat'),
+                alt.Y('Wertentwicklung',
+                    scale=alt.Scale(domain=(df_fut['Wertentwicklung'].min() -1, df_fut['Wertentwicklung'].max() + 1)),
+                    title='Wertentwicklung Sparplan in EUR'),
+                tooltip=['Monat', 'Wertentwicklung', 'Sparbetrag', 'Zinsertrag (brutto)'],
+                size=alt.Size('Wertentwicklung', scale=alt.Scale(range=[1, 4, 10]), legend=None),
+            ).interactive().properties(
+                width=breit,
+                height=hoch
+            )
+
+            chart_spar = alt.Chart(df_fut).mark_trail(point=True, clip=True, color='yellow', opacity=0.8).encode(
+                alt.X('Monat',
+                    title='Monat'),
+                alt.Y('Sparbetrag'),
+                tooltip=['Monat', 'Wertentwicklung', 'Sparbetrag', 'Zinsertrag (brutto)'],
+                size=alt.Size('Sparbetrag', scale=alt.Scale(range=[1, 4, 10]), legend=None),
+            ).interactive().properties(
+                width=breit,
+                height=hoch
+            )
+
+            chart = chart_fut + chart_spar
+            chart
     
 ###Sector Info
         @st.cache

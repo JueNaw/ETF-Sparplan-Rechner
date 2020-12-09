@@ -29,7 +29,7 @@ def main():
 
     st.success('ETF Sparplan Rechner')
 
-    col1, col2 = st.beta_columns([1,2])
+    col1, col2 = st.beta_columns([1,3])
     col2_1, col2_2 = st.beta_columns([3,1])
 ##Eingabe
     with col1:
@@ -81,8 +81,8 @@ def main():
         count = df_out.index.max()
         perf_pyear = round(df_out['Performance in %'][count] / df_out['index'].max() * 12, 2).astype(str)
         max_drawdown = df_out['Differenz zu max Kurs'].min().astype(str)
-        st.success('Durchschnittlich Performance pro Jahr: ' + perf_pyear + '%')
-        st.error('max. Drawdown: ' + max_drawdown + '%')
+        st.success('Durchschnittlich Performance pro Jahr seit Anfangsdatum: ' + perf_pyear + '%')
+        st.error('max. Drawdown seit Anfangsdatum: ' + max_drawdown + '%')
 
     ##Kosten + Größe
     
@@ -94,13 +94,13 @@ def main():
         st.success('Nettovermögen d. Fonds: ' + cont_Nettoverm)
         st.error('Netto Kostenquote p.a.: ' + cont_Kostenquote)
 
-###Grafik
+###Grafik Historisch
     with col2_1:
-        option = st.selectbox('Wertentwicklung zukünftig oder historisch?', ('Zukünftig', 'Historisch'))
+        option = st.selectbox('Wertentwicklung anzeigen als: Zukünftig oder historisch und grafisch oder als Tabelle?', ('Zukünftig mit Grafik', 'Zukünftig mit Tabelle', 'Historisch mit Grafik', 'Historisch mit Tabelle'))
         breit = 500
         hoch = 450
 
-        if option == 'Historisch':
+        if option == 'Historisch mit Grafik':
             chart_plan = alt.Chart(df_out).mark_trail(point=True, clip=True, opacity=0.8).encode(
                 alt.X('Datum',
                     #scale=alt.Scale(domain=(df_hist['Datum'].astype(int).min() -1, df_hist['Datum'].astype(int).max() + 1)),
@@ -120,13 +120,14 @@ def main():
                     title='Datum'),
                 alt.Y('Investiert in EUR',
                     title='Investiert in EUR'),
+                tooltip=['Datum', 'Wertentwicklung Sparplan in EUR', 'Performance in %', 'Investiert in EUR'],
                 size=alt.Size('Investiert in EUR', scale=alt.Scale(range=[1, 4, 10]), legend=None),
             ).interactive()
 
             chart = chart_plan + chart_invest
             st.altair_chart(chart)
-        else:
-            Laufzeit = 20
+        elif option == 'Zukünftig mit Grafik':
+            Laufzeit = st.number_input('Wie viele Jahre planst du zu investieren?', min_value=5, max_value=50, value=10)
 
             df_fut = pd.DataFrame([], columns=['Sparbetrag', 'Wertentwicklung', 'Zinsertrag (brutto)'], index=range(Laufzeit*12)).reset_index().rename(columns={'index': 'Monat'})
             df_fut['Monat'] = df_fut.index + 1 
@@ -136,7 +137,7 @@ def main():
             df_fut['Zinsertrag (brutto)'] = df_fut['Wertentwicklung'] - df_fut['Sparbetrag']
             df_fut['Wertentwicklung'] = round(df_fut['Wertentwicklung'] *1, 2)
             df_fut['Zinsertrag (brutto)'] = round(df_fut['Zinsertrag (brutto)'] *1, 2)
-
+        
 ###Grafik Zukunft
             chart_fut = alt.Chart(df_fut).mark_trail(point=True, clip=True, opacity=0.8).encode(
                 alt.X('Monat',
@@ -165,7 +166,30 @@ def main():
 
             chart = chart_fut + chart_spar
             chart
-    
+
+###Tabelle historisch        
+        elif option == 'Historisch mit Tabelle':
+            df_out = df_out[['Datum', 'Investiert in EUR', 'Wertentwicklung Sparplan in EUR', 'Performance in %']].rename(columns={'Investiert in EUR': 'Sparbetrag in EUR', 'Wertentwicklung Sparplan in EUR': 'Wertentwicklung in EUR'})
+            df_outhtml = df_out.to_html(escape=False, index=False)
+            st.markdown(df_outhtml, unsafe_allow_html=True)
+            
+
+###Tabelle zukünftig       
+        else:
+            Laufzeit = st.number_input('Wie viele Jahre planst du zu investieren?', min_value=5, max_value=50, value=10)
+
+            df_fut = pd.DataFrame([], columns=['Sparbetrag in EUR', 'Wertentwicklung in EUR', 'Zinsertrag in EUR'], index=range(Laufzeit*12)).reset_index().rename(columns={'index': 'Monat'})
+            df_fut['Monat'] = df_fut.index + 1 
+            df_fut['Sparbetrag in EUR'] = (entry_money * df_fut['Monat'])
+            perf_year = round(df_out['Performance in %'][count] / df_out['index'].max() * 12, 2)
+            df_fut['Wertentwicklung in EUR'] = -1 * np.fv(perf_year/100/12, df_fut['Monat'], entry_money, 0, when=1)
+            df_fut['Zinsertrag in EUR'] = df_fut['Wertentwicklung in EUR'] - df_fut['Sparbetrag in EUR']
+            df_fut['Wertentwicklung in EUR'] = round(df_fut['Wertentwicklung in EUR'] *1, 2)
+            df_fut['Zinsertrag in EUR'] = round(df_fut['Zinsertrag in EUR'] *1, 2)
+            df_futhtml = df_fut.to_html(escape=False, index=False)
+            st.markdown(df_futhtml, unsafe_allow_html=True)
+
+
 ###Sector Info
         @st.cache
         def key_sector(key_sector):
@@ -187,6 +211,7 @@ def main():
         table = pd.DataFrame(df_merge).style.set_precision(2)
         st.table(table)
 
+###Werbung
     with col2_2:
         
         st.text_area('', 'Diesen Broker nutze ich - nur zu empfehlen:')

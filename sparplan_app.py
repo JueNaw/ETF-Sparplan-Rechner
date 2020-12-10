@@ -33,7 +33,7 @@ def main():
     col2_1, col2_2 = st.beta_columns([3,1])
 ##Eingabe
     with col1:
-        liste = (['IVV'])
+        liste = (['IVV','VWCE.DE', 'IUSQ.DE','IS3N.DE','EUNL.DE','XMME.DE','CSSPX.MI','EXSA.DE','SXRT.DE','SXR1.DE','EUNN.DE','EXS1.DE','EXS3.F','EXS2.F','XDWT.F','XDW0.F','EDMW.DE','SNAW.DE','SLMA.DE','EPRA.PA','CRBU.L','C3M.PA','VETY.AS','VECP.L','FRCK.DE','AGGH.SW'])
         entry_list = st.selectbox('Wähle deinen ETF:', liste) 
         entry_money = st.number_input('Wie viel willst du pro Monat einzahlen?', min_value=(25), max_value=(1500), value=(500))
         
@@ -89,10 +89,22 @@ def main():
         url = 'https://de.finance.yahoo.com/quote/' + entry_list + '?p=' + entry_list
         req = r.get(url)
         soup = BeautifulSoup(req.content, 'html.parser')
-        cont_Kostenquote = soup.body.div.find('span', {'data-reactid': '115'}).text.replace(',', '.') #netto
-        cont_Nettoverm = soup.body.div.find('span', {'data-reactid': '85'}).text.replace(',', '.')
-        st.success('Nettovermögen d. Fonds: ' + cont_Nettoverm)
-        st.error('Netto Kostenquote p.a.: ' + cont_Kostenquote)
+        try:
+            cont_Kostenquote = soup.body.div.find('span', {'data-reactid': '115'}).text.replace(',', '.') #netto
+            cont_Nettoverm = soup.body.div.find('span', {'data-reactid': '85'}).text.replace(',', '.')
+            st.success('Nettovermögen d. Fonds: ' + cont_Nettoverm)
+            st.error('Netto Kostenquote p.a.: ' + cont_Kostenquote)
+        except:
+            try:
+                cont_Kostenquote = soup.body.div.find('span', {'data-reactid': '113'}).text.replace(',', '.') #netto
+                cont_Nettoverm = soup.body.div.find('span', {'data-reactid': '83'}).text.replace(',', '.')
+                st.success('Nettovermögen d. Fonds: ' + cont_Nettoverm)
+                st.error('Netto Kostenquote p.a.: ' + cont_Kostenquote)
+            except:
+                cont_Kostenquote = soup.body.div.find('span', {'data-reactid': '111'}).text.replace(',', '.') #netto
+                cont_Nettoverm = soup.body.div.find('span', {'data-reactid': '81'}).text.replace(',', '.')
+                st.success('Nettovermögen d. Fonds: ' + cont_Nettoverm)
+                st.error('Netto Kostenquote p.a.: ' + cont_Kostenquote)
 
 ###Grafik Historisch
     with col2_1:

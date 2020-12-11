@@ -29,12 +29,95 @@ def main():
 
     st.success('ETF Sparplan Rechner')
 
-    col1, col2 = st.beta_columns([1,3])
+###Eingabe
+    df_etf = pd.read_excel('ETFs.xlsx', index_col='ETF').drop(columns=['Unnamed: 4', 'Unnamed: 5', 'WKN'])
+           
+    list = st.selectbox('Wähle deinen ETF:', df_etf.index) 
+    entry = df_etf['RIC']
+    entry_list = entry[list]
+    inf = df_etf['Branche/Region']
+
+###Col Defintion    
+    col0_1, col0_2 = st.beta_columns(2)
+    col1, col2 = st.beta_columns(2)
     col2_1, col2_2 = st.beta_columns([3,1])
-##Eingabe
+    
+    with col0_1:
+        st.info(inf[list])
+    
+    with col0_2:
+        url = 'https://de.finance.yahoo.com/quote/' + entry_list + '?p=' + entry_list
+        req = r.get(url)
+        soup = BeautifulSoup(req.content, 'html.parser')
+        try:
+            cont_Kostenquote = soup.body.div.find('span', {'data-reactid': '115'}).text.replace(',', '.') #netto
+            cont_Nettoverm = soup.body.div.find('span', {'data-reactid': '85'}).text.replace(',', '.')
+            
+            try:
+                size = pd.DataFrame([], columns=['Volumen'], index=[0])
+                size['Volumen'] = cont_Nettoverm
+                size = size['Volumen'].str.replace('M', '')
+                test = size.astype(float) * 1
+                vol = test[0].astype(str) + ' Mio. EUR'
+            except:
+                try:
+                    size = pd.DataFrame([], columns=['Volumen'], index=[0])
+                    size['Volumen'] = cont_Nettoverm
+                    size = size['Volumen'].str.replace('B', '')
+                    test = size.astype(float) * 1
+                    vol = test[0].astype(str) + ' Mrd. EUR'
+                except:
+                    vol = 'N/A'
+            
+            st.success('Nettovermögen d. Fonds: ' + vol)
+            st.error('Netto Kostenquote (TER) p.a.: ' + cont_Kostenquote)
+        except:
+            try:
+                cont_Kostenquote = soup.body.div.find('span', {'data-reactid': '113'}).text.replace(',', '.') #netto
+                cont_Nettoverm = soup.body.div.find('span', {'data-reactid': '83'}).text.replace(',', '.')
+                            
+                try:
+                    size = pd.DataFrame([], columns=['Volumen'], index=[0])
+                    size['Volumen'] = cont_Nettoverm
+                    size = size['Volumen'].str.replace('M', '')
+                    test = size.astype(float) * 1
+                    vol = test[0].astype(str) + ' Mio. EUR'
+                except:
+                    try:
+                        size = pd.DataFrame([], columns=['Volumen'], index=[0])
+                        size['Volumen'] = cont_Nettoverm
+                        size = size['Volumen'].str.replace('B', '')
+                        test = size.astype(float) * 1
+                        vol = test[0].astype(str) + ' Mrd. EUR'
+                    except:
+                        vol = 'N/A'
+
+                st.success('Nettovermögen d. Fonds: ' + vol)
+                st.error('Netto Kostenquote (TER) p.a.: ' + cont_Kostenquote)
+            except:
+                cont_Kostenquote = soup.body.div.find('span', {'data-reactid': '111'}).text.replace(',', '.') #netto
+                cont_Nettoverm = soup.body.div.find('span', {'data-reactid': '81'}).text.replace(',', '.')
+                
+                try:
+                    size = pd.DataFrame([], columns=['Volumen'], index=[0])
+                    size['Volumen'] = cont_Nettoverm
+                    size = size['Volumen'].str.replace('M', '')
+                    test = size.astype(float) * 1
+                    vol = test[0].astype(str) + ' Mio. EUR'
+                except:
+                    try:
+                        size = pd.DataFrame([], columns=['Volumen'], index=[0])
+                        size['Volumen'] = cont_Nettoverm
+                        size = size['Volumen'].str.replace('B', '')
+                        test = size.astype(float) * 1
+                        vol = test[0].astype(str) + ' Mrd. EUR'
+                    except:
+                        vol = 'N/A'
+
+                st.success('Nettovermögen d. Fonds: ' + vol)
+                st.error('Netto Kostenquote (TER) p.a.: ' + cont_Kostenquote)
+
     with col1:
-        liste = (['IVV','VWCE.DE', 'IUSQ.DE','IS3N.DE','EUNL.DE','XMME.DE','CSSPX.MI','EXSA.DE','SXRT.DE','SXR1.DE','EUNN.DE','EXS1.DE','EXS3.F','EXS2.F','XDWT.F','XDW0.F','EDMW.DE','SNAW.DE','SLMA.DE','EPRA.PA','CRBU.L','C3M.PA','VETY.AS','VECP.L','FRCK.DE','AGGH.SW'])
-        entry_list = st.selectbox('Wähle deinen ETF:', liste) 
         entry_money = st.number_input('Wie viel willst du pro Monat einzahlen?', min_value=(25), max_value=(1500), value=(500))
         
         start = st.date_input('Anfangsdatum', dt.datetime(2010, 1, 1), min_value=dt.datetime(2010, 1, 1), max_value=dt.datetime(2019, 1, 1))
@@ -83,28 +166,6 @@ def main():
         max_drawdown = df_out['Differenz zu max Kurs'].min().astype(str)
         st.success('Durchschnittlich Performance pro Jahr seit Anfangsdatum: ' + perf_pyear + '%')
         st.error('max. Drawdown seit Anfangsdatum: ' + max_drawdown + '%')
-
-    ##Kosten + Größe
-    
-        url = 'https://de.finance.yahoo.com/quote/' + entry_list + '?p=' + entry_list
-        req = r.get(url)
-        soup = BeautifulSoup(req.content, 'html.parser')
-        try:
-            cont_Kostenquote = soup.body.div.find('span', {'data-reactid': '115'}).text.replace(',', '.') #netto
-            cont_Nettoverm = soup.body.div.find('span', {'data-reactid': '85'}).text.replace(',', '.')
-            st.success('Nettovermögen d. Fonds: ' + cont_Nettoverm)
-            st.error('Netto Kostenquote p.a.: ' + cont_Kostenquote)
-        except:
-            try:
-                cont_Kostenquote = soup.body.div.find('span', {'data-reactid': '113'}).text.replace(',', '.') #netto
-                cont_Nettoverm = soup.body.div.find('span', {'data-reactid': '83'}).text.replace(',', '.')
-                st.success('Nettovermögen d. Fonds: ' + cont_Nettoverm)
-                st.error('Netto Kostenquote p.a.: ' + cont_Kostenquote)
-            except:
-                cont_Kostenquote = soup.body.div.find('span', {'data-reactid': '111'}).text.replace(',', '.') #netto
-                cont_Nettoverm = soup.body.div.find('span', {'data-reactid': '81'}).text.replace(',', '.')
-                st.success('Nettovermögen d. Fonds: ' + cont_Nettoverm)
-                st.error('Netto Kostenquote p.a.: ' + cont_Kostenquote)
 
 ###Grafik Historisch
     with col2_1:
@@ -201,11 +262,21 @@ def main():
             df_futhtml = df_fut.to_html(escape=False, index=False)
             st.markdown(df_futhtml, unsafe_allow_html=True)
 
+###Werbung
+    with col2_2:
+        st.text_area('', 'Diesen Broker nutze ich - nur zu empfehlen:')
+        url_neu = 'https://financeads.net/tc.php?t=40489C274463070B'    
+        link = pd.DataFrame(['<a href="' +url_neu+ '" target="_blank"><img src="https://www.clever-und-erfolgreich.de/wp-content/uploads/etf/trade_republic.png" width="145" ></a>'], columns=[''])
+        html = link.to_html(escape=False, index=False)   
+        st.markdown(html, unsafe_allow_html=True)
 
 ###Sector Info
+    ##Create Expander
+    my_expander = st.beta_expander("Weitere Infos: Sektorgewichtung", expanded=False)
+    with my_expander:
         @st.cache
         def key_sector(key_sector):
-            url_sec = 'https://de.finance.yahoo.com/quote/IVV/holdings?p=' + entry_list
+            url_sec = 'https://de.finance.yahoo.com/quote/' + entry_list + '/holdings?p=' + entry_list
             req_sec = r.get(url_sec)
             dat_sec = BeautifulSoup(req_sec.content, 'html.parser')
             cont_sec = dat_sec.body('div', {'class': 'Mb(25px)'})
@@ -222,16 +293,6 @@ def main():
 
         table = pd.DataFrame(df_merge).style.set_precision(2)
         st.table(table)
-
-###Werbung
-    with col2_2:
-        
-        st.text_area('', 'Diesen Broker nutze ich - nur zu empfehlen:')
-        url_neu = 'https://financeads.net/tc.php?t=40489C274463070B'    
-        link = pd.DataFrame(['<a href="' +url_neu+ '" target="_blank"><img src="https://www.clever-und-erfolgreich.de/wp-content/uploads/etf/trade_republic.png" width="145" ></a>'], columns=[''])
-        html = link.to_html(escape=False, index=False)   
-        st.markdown(html, unsafe_allow_html=True)
-    
     
 if __name__ == '__main__':
     main()

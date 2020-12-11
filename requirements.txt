@@ -4,3 +4,5 @@ pandas-datareader
 beautifulsoup4
 altair
 numpy
+lxml
+xlrd

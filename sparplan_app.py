@@ -1,6 +1,7 @@
 import pandas as pd
 import pandas_datareader.data as web
 from pandas._config.config import reset_option
+import xlrd
 import numpy as np
 
 import datetime as dt
@@ -31,9 +32,7 @@ def main():
     st.success('ETF Sparplan Rechner')
 
 ###Eingabe
-    input  = pd.read_excel('ETF.xlsx')
-    input = input.set_index('ETF')
-    df_etf = pd.DataFrame(input)           
+    df_etf  = pd.read_excel('ETF.xlsx', index_col='ETF')
     list = st.selectbox('Wähle deinen ETF:', df_etf.index)
     entry = df_etf['RIC']
     entry_list = entry[list]

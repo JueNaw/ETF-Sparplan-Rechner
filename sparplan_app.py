@@ -31,7 +31,7 @@ def main():
     st.success('ETF Sparplan Rechner')
 
 ###Eingabe
-    df_etf = pd.read_excel('ETFs.xlsx', index_col='ETF').drop(columns=['Unnamed: 4', 'Unnamed: 5', 'WKN'])
+    df_etf = pd.read_excel('ETFs.xlsx', index_col='ETF')
            
     list = st.selectbox('Wähle deinen ETF:', df_etf.index) 
     entry = df_etf['RIC']

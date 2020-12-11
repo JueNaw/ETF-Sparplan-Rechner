@@ -1,7 +1,6 @@
 import pandas as pd
 import pandas_datareader.data as web
 from pandas._config.config import reset_option
-import xlrd
 import numpy as np
 
 import datetime as dt
@@ -19,7 +18,7 @@ import streamlit as st
 def main():
     """ ETF Sparplan """
     ##General Settings
-    st.set_page_config(page_title='CLUE - ETF Sparplan Rechner', page_icon='logo.jpg')
+    st.set_page_config(page_title='ETF Sparplan Rechner')#, page_icon='logo.jpg')
     
     ## Hide Hamburger Menu
     hide_menu_style = """
@@ -32,7 +31,7 @@ def main():
     st.success('ETF Sparplan Rechner')
 
 ###Eingabe
-    df_etf  = pd.read_excel('ETF.xlsx', index_col='ETF')
+    df_etf  = pd.read_excel('ETF.xls', index_col='ETF')
     list = st.selectbox('Wähle deinen ETF:', df_etf.index)
     entry = df_etf['RIC']
     entry_list = entry[list]

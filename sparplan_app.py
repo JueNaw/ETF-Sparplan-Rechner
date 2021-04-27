@@ -265,7 +265,7 @@ def main():
 ###Werbung
     with col2_2:
         st.text_area('', 'Diesen Broker nutze ich - nur zu empfehlen:')
-        url_neu = 'https://financeads.net/tc.php?t=19947C274449896B'    
+        url_neu = 'https://www.financeads.net/tc.php?t=19947C274470276B'    
         link = pd.DataFrame(['<a href="' +url_neu+ '" target="_blank"><img src="https://etf-blog.com/wp-content/uploads/2020/10/trade_republic_sparplan.png" width="145" ></a>'], columns=[''])
         html = link.to_html(escape=False, index=False)   
         st.markdown(html, unsafe_allow_html=True)

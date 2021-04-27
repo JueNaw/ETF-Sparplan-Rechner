@@ -4,5 +4,5 @@ pandas-datareader==0.9.0
 beautifulsoup4==4.9.3
 altair==4.1.0
 numpy==1.19.5
-lxml==4.5.2
+lxml==4.6.3
 xlrd==2.0.1
